@@ -7,10 +7,11 @@
     "icon": "./assets/images/icon.png",
     "scheme": "liftup",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },
+    "jsEngine": "hermes",
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -37,6 +38,19 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#22D3EE"
+        }
+      ],
+      [
+        "sentry-expo",
+        {
+          "project": "liftup",
+          "organization": "liftup"
         }
       ]
     ],

@@ -1,112 +1,105 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback } from 'react';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { useSettingsStore } from '@/stores/settings-store';
+import { ensurePushPermissions } from '@/lib/notifications';
+import { useSyncQueue } from '@/lib/sync/use-sync-queue';
+import { useLiftSessionsQuery } from '@/lib/api/hooks';
 
-export default function TabTwoScreen() {
+export default function InsightsScreen() {
+  const theme = useSettingsStore((state) => state.theme);
+  const setTheme = useSettingsStore((state) => state.setTheme);
+  const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
+  const toggleNotifications = useSettingsStore((state) => state.toggleNotifications);
+  const motionTrackingEnabled = useSettingsStore((state) => state.motionTrackingEnabled);
+  const toggleMotionTracking = useSettingsStore((state) => state.toggleMotionTracking);
+  const { queue } = useSyncQueue();
+  const remoteQuery = useLiftSessionsQuery();
+
+  const handleNotificationPermission = useCallback(async () => {
+    const permission = await ensurePushPermissions();
+    toggleNotifications(Boolean(permission?.granted));
+  }, [toggleNotifications]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <ScrollView className="flex-1 bg-slate-950 px-5 pt-10" contentContainerStyle={{ paddingBottom: 80 }}>
+      <Text className="text-2xl font-bold text-slate-100">系统偏好</Text>
+      <Text className="mt-2 text-sm text-slate-400">配置主题、通知以及传感器以匹配你的训练场景。</Text>
+
+      <View className="mt-6 rounded-2xl border border-slate-800/60 bg-slate-900/50 p-5">
+        <Text className="text-base font-semibold text-slate-100">主题</Text>
+        <View className="mt-4 gap-3">
+          {(['system', 'light', 'dark'] as const).map((option) => (
+            <Pressable
+              key={option}
+              className="flex-row items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/70 px-4 py-3"
+              onPress={() => setTheme(option)}
+            >
+              <Text className="capitalize text-slate-100">{option}</Text>
+              {theme === option && <Feather name="check" size={18} color="#22D3EE" />}
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View className="mt-6 gap-4 rounded-2xl border border-slate-800/60 bg-slate-900/50 p-5">
+        <Text className="text-base font-semibold text-slate-100">通知与传感器</Text>
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="font-medium text-slate-200">训练提醒</Text>
+            <Text className="text-xs text-slate-500">启用后可安排本地推送，随时提醒计划</Text>
+          </View>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={(next) => {
+              if (next) {
+                handleNotificationPermission().catch(() => null);
+              } else {
+                toggleNotifications(false);
+              }
+            }}
+          />
+        </View>
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="font-medium text-slate-200">传感器采样</Text>
+            <Text className="text-xs text-slate-500">开启后将持续监听加速度与陀螺仪</Text>
+          </View>
+          <Switch value={motionTrackingEnabled} onValueChange={toggleMotionTracking} />
+        </View>
+      </View>
+
+      <View className="mt-6 rounded-2xl border border-slate-800/60 bg-slate-900/50 p-5">
+        <Text className="text-base font-semibold text-slate-100">同步概览</Text>
+        <Text className="mt-2 text-sm text-slate-400">
+          当前同步队列 {queue.length} 条，远端已缓存 {remoteQuery.data?.length ?? 0} 条，状态：
+          {remoteQuery.isFetching ? '同步中' : '空闲'}。
+        </Text>
+        <View className="mt-4 gap-2">
+          {queue.map((item) => (
+            <View
+              key={item.id}
+              className="rounded-xl border border-slate-800/80 bg-slate-900/80 px-4 py-3"
+            >
+              <Text className="text-sm text-slate-200">
+                {item.entity} · {item.operation}
+              </Text>
+              <Text className="mt-1 text-xs text-slate-500">
+                最近尝试：{item.lastTriedAt ? new Date(item.lastTriedAt).toLocaleString() : '未同步'}
+              </Text>
+              {item.error ? (
+                <Text className="mt-1 text-xs text-amber-400">错误：{item.error}</Text>
+              ) : null}
+            </View>
+          ))}
+          {queue.length === 0 ? (
+            <Text className="rounded-xl bg-slate-900/60 px-4 py-5 text-center text-sm text-slate-500">
+              队列为空，本地与云端已经同步。
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
